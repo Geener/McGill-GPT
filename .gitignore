@@ -1,2 +1,5 @@
 poetry.lock
 .vscode
+.env
+output/
+links.csv
