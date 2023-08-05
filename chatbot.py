@@ -6,6 +6,22 @@ from llm import answer_question
 load_dotenv()
 
 
+# Removes "\output", replaces _ with \, removes ".txt"
+def format_source(input_string: str) -> str:
+    # Remove "output/" from the beginning of the string
+    if input_string.startswith("output\\"):
+        input_string = input_string[len("output\\") :]
+
+    # Remove ".txt" at the end of the string
+    if input_string.endswith(".txt"):
+        input_string = input_string[: -len(".txt")]
+
+    # Change all "_" to "/"
+    input_string = input_string.replace("_", "/")
+
+    return input_string
+
+
 # combines answer and sources
 def display_answer(answer: str, sources) -> str:
     # if no sources were found
@@ -17,7 +33,7 @@ def display_answer(answer: str, sources) -> str:
     display_sources = "Sources:\n"
 
     for index, source in enumerate(sources):
-        display_sources += f"{index+1}: {source} \n"
+        display_sources += f"{index+1}. {format_source(source)} \n"
 
     return answer + "\n\n" + display_sources
 
