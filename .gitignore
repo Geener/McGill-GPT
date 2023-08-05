@@ -3,3 +3,4 @@ poetry.lock
 .env
 output/
 links.csv
+VectorDB/
