@@ -28,7 +28,7 @@ def build_llm():
         llm,
         chain_type="stuff",
         retriever=vectorDB.as_retriever(),
-        return_source_documents=False,
+        return_source_documents=True,
         chain_type_kwargs={"prompt": prompt},
     )
 
