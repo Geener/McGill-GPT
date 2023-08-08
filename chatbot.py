@@ -5,6 +5,12 @@ from llm import answer_question
 load_dotenv()
 
 
+# Load the image
+mcgill_path = "images/McGill-crest.jpg"  # Replace with your image filename
+banner_path = "images/McGill-banner.png"
+emoji_path = "images/student_emoji.png"
+
+
 # Removes "\output", replaces _ with \, removes ".txt"
 def format_source(input_string: str) -> str:
     # Remove "output/" from the beginning of the string
@@ -40,20 +46,25 @@ def display_answer(answer: str, sources) -> str:
     return answer + "\n\n" + display_sources
 
 
-st.title("💬 McGill GPT")
+st.image(banner_path)
 
+
+st.caption(
+    """Ask any McGill related question to get up to date instant answers.  \nNot affiliated with McGill.  \nBy: Adam Geenen"""
+)
 
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [
-        {"role": "assistant", "result": "How can I help you?"}
-    ]
+    st.session_state["messages"] = [{"role": "McGill", "result": "How can I help you?"}]
 
 for msg in st.session_state.messages:
-    st.chat_message(msg["role"]).write(msg["result"])
+    if msg["role"] == "McGill":
+        st.chat_message(msg["role"], avatar=mcgill_path).write(msg["result"])
+    else:
+        st.chat_message(msg["role"], avatar=emoji_path).write(msg["result"])
 
 if question := st.chat_input():
     st.session_state.messages.append({"role": "user", "result": question})
-    st.chat_message("user").write(question)
+    st.chat_message("user", avatar=emoji_path).write(question)
 
     response = answer_question(query=question)
 
@@ -61,7 +72,5 @@ if question := st.chat_input():
     sources = set(doc.metadata["source"] for doc in response["source_documents"])
 
     formatted_response = display_answer(base_answer, sources)
-    st.session_state.messages.append(
-        {"role": "assistant", "result": formatted_response}
-    )
-    st.chat_message("assistant").write(formatted_response)
+    st.session_state.messages.append({"role": "McGill", "result": formatted_response})
+    st.chat_message("McGill", avatar=mcgill_path).write(formatted_response)
