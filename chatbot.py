@@ -47,30 +47,41 @@ def display_answer(answer: str, sources) -> str:
 
 
 st.image(banner_path)
-
-
 st.caption(
     """Ask any McGill related question to get up to date instant answers.  \nNot affiliated with McGill.  \nBy: Adam Geenen"""
 )
 
+# Creates default chatbot message
 if "messages" not in st.session_state:
     st.session_state["messages"] = [{"role": "McGill", "result": "How can I help you?"}]
 
+# Used to store chat history and pass it back to the LLM
+if "chat_history" not in st.session_state:
+    st.session_state["chat_history"] = []
+
+# Determine what icon to use for chat based on role
 for msg in st.session_state.messages:
     if msg["role"] == "McGill":
         st.chat_message(msg["role"], avatar=mcgill_path).write(msg["result"])
     else:
         st.chat_message(msg["role"], avatar=emoji_path).write(msg["result"])
 
+#
 if question := st.chat_input():
     st.session_state.messages.append({"role": "user", "result": question})
     st.chat_message("user", avatar=emoji_path).write(question)
 
-    response = answer_question(query=question)
+    response = answer_question(
+        query=question, chat_history=st.session_state["chat_history"]
+    )
 
-    base_answer = response["result"]
+    base_answer = response["answer"]
     sources = set(doc.metadata["source"] for doc in response["source_documents"])
 
     formatted_response = display_answer(base_answer, sources)
-    st.session_state.messages.append({"role": "McGill", "result": formatted_response})
+    st.session_state["messages"].append(
+        {"role": "McGill", "result": formatted_response}
+    )
     st.chat_message("McGill", avatar=mcgill_path).write(formatted_response)
+
+    st.session_state["chat_history"].append((question, base_answer))

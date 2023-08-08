@@ -1,7 +1,7 @@
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain import PromptTemplate
 from langchain.vectorstores import FAISS
-from langchain.chains import RetrievalQA
+from langchain.chains import RetrievalQA, ConversationalRetrievalChain
 from langchain.llms import OpenAI
 
 
@@ -24,26 +24,31 @@ def build_llm():
     )
     vectorDB = FAISS.load_local("vectorDB/db_faiss", OpenAIEmbeddings())
 
-    dbqa = RetrievalQA.from_chain_type(
-        llm,
-        chain_type="stuff",
+    # dbqa = RetrievalQA.from_chain_type(
+    #     llm,
+    #     chain_type="stuff",
+    #     retriever=vectorDB.as_retriever(),
+    #     return_source_documents=True,
+    #     chain_type_kwargs={"prompt": prompt},
+    # )
+
+    dbqa_history = ConversationalRetrievalChain.from_llm(
+        llm=llm,
         retriever=vectorDB.as_retriever(),
+        chain_type="stuff",
         return_source_documents=True,
-        chain_type_kwargs={"prompt": prompt},
     )
 
-    return dbqa
+    return dbqa_history
 
 
-def answer_question(query: str):
+def answer_question(query: str, chat_history):
     print("Generating response...")
 
     dqQA = build_llm()
 
-    response = dqQA({"query": query})
+    response = dqQA({"question": query, "chat_history": chat_history})
 
-    print("***********************************")
-    print(response["result"])
-    print(response["result"])
+    print(response)
 
     return response
