@@ -1,6 +1,5 @@
 import streamlit as st
 from dotenv import load_dotenv
-from streamlit_chat import message
 from llm import answer_question
 
 load_dotenv()
@@ -28,6 +27,9 @@ def display_answer(answer: str, sources) -> str:
     if not sources:
         return ""
 
+    if "I'm sorry" in answer:
+        return answer
+
     sources_list = list(sources)
     sources_list.sort()
     display_sources = "Sources:\n"
@@ -38,38 +40,28 @@ def display_answer(answer: str, sources) -> str:
     return answer + "\n\n" + display_sources
 
 
-st.header("💬 McGill Chatbot")
-
-# Creates text input
-question = st.text_input("Question", placeholder="Enter your question here...")
-
-# initialize both lists to empty (since no chat history)
-if "user_question_history" not in st.session_state:
-    st.session_state["user_question_history"] = []
-
-if "chat_answers_history" not in st.session_state:
-    st.session_state["chat_answers_history"] = []
-
-# Generates and displays query response when entered
-if question:
-    with st.spinner("Generating response..."):
-        response = answer_question(query=question)
-
-        question = response["query"]
-        base_answer = response["result"]
-        sources = set(doc.metadata["source"] for doc in response["source_documents"])
-
-        formatted_response = display_answer(base_answer, sources)
-
-        st.session_state["user_question_history"].append(question)
-        st.session_state["chat_answers_history"].append(formatted_response)
+st.title("💬 McGill GPT")
 
 
-# Display messages in chat format
-if st.session_state["chat_answers_history"]:
-    for answer, question in zip(
-        st.session_state["chat_answers_history"],
-        st.session_state["user_question_history"],
-    ):
-        message(question, is_user=True, key=question)
-        message(answer, key=answer)
+if "messages" not in st.session_state:
+    st.session_state["messages"] = [
+        {"role": "assistant", "result": "How can I help you?"}
+    ]
+
+for msg in st.session_state.messages:
+    st.chat_message(msg["role"]).write(msg["result"])
+
+if question := st.chat_input():
+    st.session_state.messages.append({"role": "user", "result": question})
+    st.chat_message("user").write(question)
+
+    response = answer_question(query=question)
+
+    base_answer = response["result"]
+    sources = set(doc.metadata["source"] for doc in response["source_documents"])
+
+    formatted_response = display_answer(base_answer, sources)
+    st.session_state.messages.append(
+        {"role": "assistant", "result": formatted_response}
+    )
+    st.chat_message("assistant").write(formatted_response)
